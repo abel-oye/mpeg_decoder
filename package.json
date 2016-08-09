@@ -1,0 +1,8 @@
+{
+  "name": "mpeg_decoder",
+  "version": "0.0.1",
+  "description": "a mpeg decoder run on browser",
+  "main": "mpeg_decoder.js",
+  "author": "MROS",
+  "license": "ISC"
+}
