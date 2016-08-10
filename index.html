@@ -10,8 +10,7 @@
     <script type="text/javascript">
       var canvas = document.getElementById('canvas');
       var player = new Player("/data/I_ONLY.M1V", canvas);
-      player.loadVideo();
-      player.play();
+      player.loadVideo({autoplay: true});
     </script>
     <style media="screen">
       #canvas {
