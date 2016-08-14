@@ -1,16 +1,23 @@
-// 本檔案儲存各 variable length code 的表格以及解析函式
+/*
+  本檔案儲存各 variable length code 的表格以及解析函式
+*/
 
 // 每一層 table 的大小，若為 8 則 table 大小為 2^8 = 256
 const NORMAL_SIZE_PER_LEVEL = 8;
 
-// code 為 一陣列
-function *generate_all_prefix(code, length) {
-  var post_len = length - code.length;
+function code_to_num(code) {
   var code_num = 0;
   for (let i = 0; i < code.length; i++) {
     code_num = code_num << 1;
     code_num += code[i];
   }
+  return code_num;
+}
+
+// code 為 一陣列
+function *generate_all_prefix(code, length) {
+  var post_len = length - code.length;
+  var code_num = code_to_num(code);
   for (let i = 0; i < (1 << post_len); i++) {
     yield (code_num << post_len) + i;
   }
