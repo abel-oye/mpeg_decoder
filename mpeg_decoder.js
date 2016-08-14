@@ -42,9 +42,41 @@ class Player {
     return ret;
   }
 
+  reset_readbits() {
+    this.bit_counter = 0;
+  }
+
+  readbits_no_advance(num) {
+    var copy_bit_counter = this.bit_counter;
+    var copy_byte_buf = this.byte_buf;
+    var copy_pointer = this.pointer;
+
+    var ret = 0;
+    for (let i = 0; i < num; i++) {
+      if (copy_bit_counter == 0) {
+        copy_byte_buf = this.buffer[copy_pointer];
+        copy_pointer += 1;
+      }
+      ret = (ret << 1) + ((copy_byte_buf & (1 << (7 - copy_bit_counter))) > 0 ? 1 : 0);
+      copy_bit_counter = copy_bit_counter == 7 ? 0 : copy_bit_counter + 1;
+    }
+    return ret;
+  }
+
   readbytes (num) {
     var ret = this.buffer.slice(this.pointer, this.pointer + num);
     this.pointer += num;
+    return ret;
+  }
+
+  match_macroblock_address_increment() {
+    // 先使用 readbits ，效率可能頗差
+
+  }
+
+  read_and_log (str, len) {
+    var ret = this.readbits(len);
+    console.log(str + " = " + ret);
     return ret;
   }
 
@@ -76,23 +108,18 @@ class Player {
     console.log("寬*高為 " + width + " * " + height);
     this.canvas.width = width;
     this.canvas.height = height;
-    var read_and_log = function (str, len) {
-      var ret = this.readbits(len);
-      console.log(str + " = " + ret);
-      return ret;
-    }.bind(this);
-    read_and_log("pel_aspect_rate", 4);
-    read_and_log("picture_rate", 4);
-    read_and_log("bit_rate", 18);
-    read_and_log("marker_bit", 1);
-    read_and_log("vbv_buffer_size ", 10);
-    read_and_log("constrained_parameter_flag", 1);
-    var should_load = read_and_log("load_intra_quantizer_matrix ", 1);
+    this.read_and_log("pel_aspect_rate", 4);
+    this.read_and_log("picture_rate", 4);
+    this.read_and_log("bit_rate", 18);
+    this.read_and_log("marker_bit", 1);
+    this.read_and_log("vbv_buffer_size ", 10);
+    this.read_and_log("constrained_parameter_flag", 1);
+    var should_load = this.read_and_log("load_intra_quantizer_matrix ", 1);
     if (should_load) {
       this.readbits(8*64);
       // TODO: 處理量化矩陣
     }
-    should_load = read_and_log("load_non_intra_quantizer_matrix", 1);
+    should_load = this.read_and_log("load_non_intra_quantizer_matrix", 1);
     if (should_load) {
       this.readbits(8*64);
       // TODO: 處理量化矩陣
@@ -100,24 +127,73 @@ class Player {
 
     // TODO: 處理 extension_start_code
   }
+
   read_group_of_pictures() {
     if (this.read_start_code([0x00, 0x00, 0x01, 0xB8]) == false) {
       console.error("read picture start code error");
     } else {
       console.log("read picture start code success");
     }
+    this.read_and_log("time_code", 25);
+    this.read_and_log("closed_gap", 1);
+    this.read_and_log("broken_link", 1);
+    this.reset_readbits();
+  }
+
+  read_picture() {
+    if (this.read_start_code([0x00, 0x00, 0x01, 0x00]) == false) {
+      console.error("read picture start code error");
+    } else {
+      console.log("read picture start code success");
+    }
+    this.read_and_log("temporal_reference", 10);
+    var coding_type = this.read_and_log("picture_coding_type", 3);
+    this.read_and_log("vbv_delay", 16);
+    if (coding_type == 2 || coding_type == 3) {
+      // TODO: 讀取 full_pel_forward_vector, forward_f_code
+    }
+    if (coding_type == 3) {
+      // TODO: 讀取 full_pel_backward_vector, backward_f_code
+    }
+    // TODO: extra_bit_picture
+    this.reset_readbits();
+  }
+
+  read_slice() {
+    if (this.read_start_code([0x00, 0x00, 0x01, 0x01]) == false) {
+      console.error("read slice start code error");
+    } else {
+      console.log("read slice start code success");
+    }
+    this.read_and_log("quantizer_scale", 5);
+    if (this.read_and_log("extra_bit_slice", 1) == 1) {
+      // TODO: 讀取 extra_information_slice
+    }
+  }
+
+  read_macroblock() {
+    while (this.readbits_no_advance(11) == 0x00000001111) {
+      console.log("macroblock_stuffing");
+    }
+    console.log("macroblock_stuffing end");
+    while (this.readbits_no_advance(11) == 0x00000001000) {
+      console.log("macroblock_escape");
+    }
+    console.log("macroblock_escape end");
   }
 
   play() {
     this.read_sequence_header();
     this.read_group_of_pictures();
+    this.read_picture();
+    this.read_slice();
+    this.read_macroblock();
     var ctx = this.canvas.getContext('2d');
     ctx.fillStyle = "rgb(200,0,0)";
     ctx.fillRect (10, 10, 55, 50);
     ctx.fillStyle = "rgba(0, 0, 200, 0.5)";
     ctx.fillRect (30, 30, 55, 50);
   }
-
 
   // 進階功能
 
