@@ -14,6 +14,13 @@ function code_to_num(code) {
   return code_num;
 }
 
+class DecodeValue {
+  constructor(length, value) {
+    this.length = length;
+    this.value = value;
+  }
+}
+
 // code 為 一陣列
 function *generate_all_prefix(code, length) {
   var post_len = length - code.length;
@@ -23,42 +30,26 @@ function *generate_all_prefix(code, length) {
   }
 }
 
-function create_match_table(info, size_per_level) {
-  // 先計算有多少個 level
-  var size_in_levels = [];
-  var remain = info.max_code_length;
-  while (true) {
-    if (remain > size_per_level) {
-      size_in_levels.push(size_per_level);
-      remain -= size_per_level;
-    } else {
-      size_in_levels.push(remain)
-      break;
-    }
-  }
-  console.log(size_in_levels);
+function create_match_table(info) {
 
   function insert_table(table, code, value, level) {
-    var size = size_in_levels[level];
-    if (code.length <= size) {
-      for (let i of generate_all_prefix(code, size)) {
-        table[i] = value;
+    if (code.length <= NORMAL_SIZE_PER_LEVEL) {
+      for (let i of generate_all_prefix(code, NORMAL_SIZE_PER_LEVEL)) {
+        table[i] = new DecodeValue(level*NORMAL_SIZE_PER_LEVEL + code.length, value);
       }
     } else {
-      console.log(code.slice(0, size));
-      var index = code_to_num(code.slice(0, size));
+      var index = code_to_num(code.slice(0, NORMAL_SIZE_PER_LEVEL));
       var next_table = table[index];
-      console.log(next_table);
       if (next_table == undefined) {
-        next_table = new Array(1 << size_in_levels[level + 1]);
+        next_table = new Array(1 << NORMAL_SIZE_PER_LEVEL);
+        table[index] = next_table;
       }
-      table[index] = next_table;
-      var next_code = code.slice(size, code.length);
+      var next_code = code.slice(NORMAL_SIZE_PER_LEVEL, code.length);
       insert_table(next_table, next_code, value, level + 1);
     }
   }
 
-  var table = new Array(1 << size_in_levels[0]);
+  var table = new Array(1 << NORMAL_SIZE_PER_LEVEL);
   for (let item of info.table) {
     var code = item[0];
     var value = item[1];
@@ -67,6 +58,9 @@ function create_match_table(info, size_per_level) {
   return table;
 }
 
+
+const MACROBLOCK_STUFFING = 34;
+const MACROBLOCK_ESCAPE = 35;
 
 const MACROBLOCK_ADDRESS_INCREMENT_INFO = {
   max_code_length: 11,
@@ -111,10 +105,9 @@ const MACROBLOCK_ADDRESS_INCREMENT_INFO = {
 
     [[0,0,0,0 ,0,0,1,1 ,0,0,1], 32],
     [[0,0,0,0 ,0,0,1,1 ,0,0,0], 33],
-    [[0,0,0,0 ,0,0,0,1 ,1,1,1], 34], // macroblock_stuffing
-    [[0,0,0,0 ,0,0,0,1 ,0,0,0], 35], // macroblock_escape
+    [[0,0,0,0 ,0,0,0,1 ,1,1,1], MACROBLOCK_STUFFING], // macroblock_stuffing
+    [[0,0,0,0 ,0,0,0,1 ,0,0,0], MACROBLOCK_ESCAPE], // macroblock_escape
   ],
-
 };
 
 const MACROBLOCK_TYPE_I_INFO = {
@@ -125,9 +118,9 @@ const MACROBLOCK_TYPE_I_INFO = {
   ]
 };
 
-var t = create_match_table(MACROBLOCK_TYPE_I_INFO, NORMAL_SIZE_PER_LEVEL)
+var t = create_match_table(MACROBLOCK_TYPE_I_INFO)
 console.log(t[0]);
 console.log(t[1]);
 console.log(t[2]);
 console.log(t[3]);
-var t2 = create_match_table(MACROBLOCK_ADDRESS_INCREMENT_INFO, NORMAL_SIZE_PER_LEVEL);
+var t2 = create_match_table(MACROBLOCK_ADDRESS_INCREMENT_INFO);

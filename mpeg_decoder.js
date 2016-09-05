@@ -63,6 +63,19 @@ class Player {
     return ret;
   }
 
+  only_advance(num) {
+    // TODO: 省去 readbits 中的一些步驟來進行加速
+    this.readbits(num)
+  }
+
+  read_vlc(table) {
+    var s = readbits_no_advance(NORMAL_SIZE_PER_LEVEL);
+    var r = table[s];
+    while (true) {
+
+    }
+  }
+
   readbytes (num) {
     var ret = this.buffer.slice(this.pointer, this.pointer + num);
     this.pointer += num;

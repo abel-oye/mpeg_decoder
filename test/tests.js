@@ -20,3 +20,13 @@ describe('測試 generate_all_prefix', function() {
 		expect(ok).to.be.equal(true);
 	});
 });
+
+describe('測試create_match_table', function() {
+	it('create_match_table[MACROBLOCK_TYPE_I_INFO][0b01000000]', function () {
+		var s = create_match_table(MACROBLOCK_TYPE_I_INFO)[0b01000000];
+		var ok = true;
+		ok = ok && (s.length == 2)
+		ok = ok && (s.value.quant == 1)
+		expect(ok).to.be.equal(true);
+	})
+})
