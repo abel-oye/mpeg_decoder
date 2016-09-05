@@ -22,11 +22,27 @@ describe('測試 generate_all_prefix', function() {
 });
 
 describe('測試create_match_table', function() {
-	it('create_match_table[MACROBLOCK_TYPE_I_INFO][0b01000000]', function () {
+	it('create_match_table(MACROBLOCK_TYPE_I_INFO)[0b01000000]', function () {
 		var s = create_match_table(MACROBLOCK_TYPE_I_INFO)[0b01000000];
 		var ok = true;
 		ok = ok && (s.length == 2)
 		ok = ok && (s.value.quant == 1)
+		expect(ok).to.be.equal(true);
+	})
+	it('create_match_table(MACROBLOCK_TYPE_I_INFO)[0b11111111]', function () {
+		var s = create_match_table(MACROBLOCK_TYPE_I_INFO)[0b11111111];
+		var ok = true;
+		console.log(s);
+		ok = ok && (s.length == 1)
+		ok = ok && (s.value.quant == 0)
+		expect(ok).to.be.equal(true);
+	})
+	it('create_match_table(MACROBLOCK_ADDRESS_INCREMENT_INFO)[0b00000101][0b11000000]', function () {
+		var s = create_match_table(MACROBLOCK_ADDRESS_INCREMENT_INFO)[0b00000101][0b11000000];
+		var ok = true;
+		console.log(s);
+		ok = ok && (s.length == 10)
+		ok = ok && (s.value == 16)
 		expect(ok).to.be.equal(true);
 	})
 })
