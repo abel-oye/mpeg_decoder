@@ -63,16 +63,47 @@ class Player {
     return ret;
   }
 
-  only_advance(num) {
-    // TODO: 省去 readbits 中的一些步驟來進行加速
-    this.readbits(num)
+  only_move_by_bit(num) {
+    if (num > 0) {
+      var bytes = Math.floor(num / 8);
+      var bits = num % 8;
+      this.bit_counter += bits;
+      if (this.bit_counter >= 8) {
+        bytes += 1;
+        this.bit_counter -= 8;
+      }
+      this.pointer += bytes;
+      this.byte_buf = this.buffer[this.pointer];
+    } else if (num < 0) {
+      num = -num;
+      var bytes = Math.floor(num / 8);
+      var bits = num % 8;
+      this.bit_counter -= bits;
+      if (this.bit_counter < 0) {
+        bytes += 1;
+        this.bit_counter += 8;
+      }
+      this.pointer -= bytes;
+      this.byte_buf = this.buffer[this.pointer];
+    }
   }
 
   read_vlc(table) {
-    var s = readbits_no_advance(NORMAL_SIZE_PER_LEVEL);
+    var s = this.readbits(NORMAL_SIZE_PER_LEVEL);
     var r = table[s];
+    var times = 0;
     while (true) {
-
+      times += 1;
+      if (r == undefined) {
+        // XXX: 尋找 javascript 中錯誤處理的方式
+        console.error("fatal error: read vlc get undefined");
+      } else if (!(r instanceof DecodeValue)) {
+        s = this.readbits(NORMAL_SIZE_PER_LEVEL);
+        r = r[s];
+      } else {
+        this.only_move_by_bit(-(times * NORMAL_SIZE_PER_LEVEL - r.length));
+        return r;
+      }
     }
   }
 
@@ -185,14 +216,43 @@ class Player {
   }
 
   read_macroblock() {
-    while (this.readbits_no_advance(11) == 0x00000001111) {
+    var address_increment = this.read_vlc(MACROBLOCK_ADDRESS_INCREMENT_TABLE);
+    console.log('macroblock_address_increment is ' + address_increment.value + ', length ' + address_increment.length);
+    if (address_increment.value == MACROBLOCK_STUFFING) {
       console.log("macroblock_stuffing");
-    }
-    console.log("macroblock_stuffing end");
-    while (this.readbits_no_advance(11) == 0x00000001000) {
+    } else if (address_increment.value == MACROBLOCK_ESCAPE) {
       console.log("macroblock_escape");
     }
-    console.log("macroblock_escape end");
+    // TODO: 判斷 picture_coding_type 之後再決定用哪個 table
+    var type = this.read_vlc(MACROBLOCK_TYPE_I_TABLE)
+    this.macroblock_intra = type.value.intra;
+    if (type.value.quant == 1) {
+      var quantizer_scale = this.read_and_log("quantizer_scale", 5);
+    }
+    if (type.value.motion_forward) {
+      console.err("未處理 motion_forward");
+    }
+    if (type.value.motion_backward) {
+      console.err("未處理 motion_backward");
+    }
+    if (type.value.pattern) {
+      console.err("未處理 pattern");
+    }
+    this.pattern_code = [0, 0, 0, 0, 0, 0];
+    for (let i = 0; i < 6; i++) {
+      // TODO: 待 pattern 處理後，再加一層限制條件
+      // if (code_block_pattern & (1 << (5-i))) {pattern_code[i] = 1;}
+      if (type.value.intra == 1) {
+        this.pattern_code[i] = 1;
+      }
+    }
+    for (let i = 0; i < 6; i++) {
+      this.read_block(i);
+    }
+  }
+
+  read_block(num) {
+    
   }
 
   play() {
