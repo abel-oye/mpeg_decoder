@@ -199,6 +199,36 @@ const MACROBLOCK_PATTERN_INFO = {
   ]
 };
 
+const DCT_DC_SIZE_LUMINANCE_INFO = {
+  table: [
+    [[1,0,0], 0],
+    [[0,0], 1],
+    [[0,1], 2],
+    [[1,0,1], 3],
+    [[1,1,0], 4],
+    [[1,1,1,0], 5],
+    [[1,1,1,1,0], 6],
+    [[1,1,1,1,1,0], 7],
+    [[1,1,1,1,1,1,0], 8]
+  ]
+};
+
+const DCT_DC_SIZE_CHROMINANCE_INFO = {
+  table: [
+    [[0,0], 0],
+    [[0,1], 1],
+    [[1,0], 2],
+    [[1,1,0], 3],
+    [[1,1,1,0], 4],
+    [[1,1,1,1,0], 5],
+    [[1,1,1,1,1,0], 6],
+    [[1,1,1,1,1,1,0], 7],
+    [[1,1,1,1,1,1,1,0], 8]
+  ]
+};
+
 var MACROBLOCK_ADDRESS_INCREMENT_TABLE = create_match_table(MACROBLOCK_ADDRESS_INCREMENT_INFO);
 var MACROBLOCK_TYPE_I_TABLE = create_match_table(MACROBLOCK_TYPE_I_INFO);
-var MACROBLOCK_PATTERN = create_match_table(MACROBLOCK_PATTERN_INFO);
+var MACROBLOCK_PATTERN_TABLE = create_match_table(MACROBLOCK_PATTERN_INFO);
+var DCT_DC_SIZE_LUMINANCE_TABLE = create_match_table(DCT_DC_SIZE_LUMINANCE_INFO);
+var DCT_DC_SIZE_CHROMINANCE_TABLE = create_match_table(DCT_DC_SIZE_CHROMINANCE_INFO);
