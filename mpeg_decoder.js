@@ -192,6 +192,7 @@ class Player {
     }
     this.read_and_log("temporal_reference", 10);
     var coding_type = this.read_and_log("picture_coding_type", 3);
+    this.coding_type = coding_type;
     this.read_and_log("vbv_delay", 16);
     if (coding_type == 2 || coding_type == 3) {
       // TODO: 讀取 full_pel_forward_vector, forward_f_code
@@ -212,6 +213,7 @@ class Player {
     this.read_and_log("quantizer_scale", 5);
     if (this.read_and_log("extra_bit_slice", 1) == 1) {
       // TODO: 讀取 extra_information_slice
+      console.err("未處理 extra_information_slice");
     }
   }
 
@@ -247,13 +249,35 @@ class Player {
       }
     }
     for (let i = 0; i < 6; i++) {
-      this.read_block(i);
+      if (this.pattern_code[i]) {
+        // this.read_block(i);
+      }
     }
   }
 
-  read_block(num) {
-    
-  }
+  read_block(i) {
+    if (this.macroblock_intra) {
+      if (i < 4) {
+        // read dct_dc_size_luminance
+        // if (dct_dc_size_luminance != 0) {
+        //   read dct_dc_differential
+        // }
+      } else {
+        // read dct_dc_size_chrominance
+        // if (dct_dc_size_chrominance != 0) {
+        //   read dct_dc_differential
+        // }
+      }
+    } else {
+      // read dct_coeff_first
+    }
+    if (this.coding_type != 4) {
+    //   while (this.readbits_no_advance(2) != 2) {
+        // read dct_coeff_next
+    //   }
+    //   this.readbits(2);
+    }
+  } 
 
   play() {
     this.read_sequence_header();
