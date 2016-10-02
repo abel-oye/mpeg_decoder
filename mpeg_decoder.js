@@ -24,6 +24,12 @@ class Player {
     })
   }
 
+  // 僅用於測試時創建測試資料
+  loadFakeVideo(buffer) {
+    this.buffer = buffer;
+    this.pointer = 0;
+  }
+
   readbyte () {
     var ret = this.buffer[this.pointer];
     this.pointer += 1;
@@ -255,18 +261,27 @@ class Player {
     }
   }
 
+  read_dct_dc_differential(num) {
+    var ret = this.readbits(num);
+    if ((ret & (1 << (num - 1))) == 0) {
+      console.log("modify");
+      ret = -(~ret & ((1 << num) - 1));
+    }
+    return ret;
+  }
+
   read_block(i) {
     if (this.macroblock_intra) {
       if (i < 4) {
-        // read dct_dc_size_luminance
-        // if (dct_dc_size_luminance != 0) {
+        var dct_dc_size_luminance = this.read_vlc(DCT_DC_SIZE_LUMINANCE_TABLE);
+        if (dct_dc_size_luminance != 0) {
         //   read dct_dc_differential
-        // }
+        }
       } else {
-        // read dct_dc_size_chrominance
-        // if (dct_dc_size_chrominance != 0) {
+        var dct_dc_size_chrominance = this.read_vlc(DCT_DC_SIZE_CHROMINANCE_TABLE);
+        if (dct_dc_size_chrominance != 0) {
         //   read dct_dc_differential
-        // }
+        }
       }
     } else {
       // read dct_coeff_first
@@ -277,7 +292,7 @@ class Player {
     //   }
     //   this.readbits(2);
     }
-  } 
+  }
 
   play() {
     this.read_sequence_header();

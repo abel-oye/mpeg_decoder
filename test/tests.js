@@ -55,3 +55,14 @@ describe('測試create_match_table', function() {
 		expect(ok).to.be.equal(true);
 	})
 })
+
+describe('測試  read_dct_dc_differential', function() {
+	var player = new Player("", null);
+	player.loadFakeVideo(new Uint8Array([0b00010000]));
+	it('首位為0', function() {
+		expect(player.read_dct_dc_differential(3)).to.be.equal(-7);
+	});
+	it('首位為1', function() {
+		expect(player.read_dct_dc_differential(3)).to.be.equal(4);
+	});
+});
